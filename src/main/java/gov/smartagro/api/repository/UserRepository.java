@@ -1,12 +1,15 @@
 package gov.smartagro.api.repository;
 
+import java.util.List;
+import java.util.Optional;
+
+import org.jboss.logging.Param;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import gov.smartagro.api.model.User;
-
-import java.util.List;
-import java.util.Optional;
 
 /**
  * Created by rajeevkumarsingh on 02/08/17.
@@ -24,4 +27,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
     Boolean existsByUsername(String username);
 
     Boolean existsByEmail(String email);
+
+	User findUserByEmail(String userEmail);
+
 }

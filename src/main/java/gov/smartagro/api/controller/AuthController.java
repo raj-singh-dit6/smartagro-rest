@@ -1,8 +1,13 @@
 package gov.smartagro.api.controller;
 
+import java.io.UnsupportedEncodingException;
 import java.net.URI;
+import java.util.Base64;
 import java.util.Collections;
+import java.util.UUID;
 
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,6 +17,9 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.authentication.logout.SecurityContextLogoutHandler;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -19,90 +27,180 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import gov.smartagro.api.exception.AppException;
+import gov.smartagro.api.model.Mail;
+import gov.smartagro.api.model.PasswordResetToken;
 import gov.smartagro.api.model.Role;
 import gov.smartagro.api.model.RoleName;
 import gov.smartagro.api.model.User;
 import gov.smartagro.api.payload.JwtAuthenticationResponse;
 import gov.smartagro.api.payload.LoginRequest;
+import gov.smartagro.api.payload.PasswordResetDto;
 import gov.smartagro.api.payload.SignUpRequest;
+import gov.smartagro.api.repository.PasswordResetTokenRepository;
 import gov.smartagro.api.repository.RoleRepository;
 import gov.smartagro.api.repository.UserRepository;
 import gov.smartagro.api.response.SingleResponse;
 import gov.smartagro.api.security.JwtTokenProvider;
+import gov.smartagro.api.service.MyEmailService;
+import gov.smartagro.api.service.UserService;
 
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {
 
-    @Autowired
-    AuthenticationManager authenticationManager;
+	@Autowired
+	PasswordResetTokenRepository tokenRepository;
 
-    @Autowired
-    UserRepository userRepository;
+	@Autowired
+	AuthenticationManager authenticationManager;
 
-    @Autowired
-    RoleRepository roleRepository;
+	@Autowired
+	UserRepository userRepository;
 
-    @Autowired
-    PasswordEncoder passwordEncoder;
+	@Autowired
+	RoleRepository roleRepository;
 
-    @Autowired
-    JwtTokenProvider tokenProvider;
+	@Autowired
+	PasswordEncoder passwordEncoder;
 
-    @PostMapping("/signin")
-    public SingleResponse<JwtAuthenticationResponse> authenticateUser(@Valid @RequestBody LoginRequest loginRequest) {
-    	SingleResponse<JwtAuthenticationResponse> resp = new SingleResponse<>();
-        Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(
-                        loginRequest.getUsernameOrEmail(),
-                        loginRequest.getPassword()
-                )
-        );
+	@Autowired
+	JwtTokenProvider tokenProvider;
 
-        SecurityContextHolder.getContext().setAuthentication(authentication);
+	@Autowired
+	MyEmailService myEmailService;
 
-        String jwt = tokenProvider.generateToken(authentication);
-        resp.setData(new JwtAuthenticationResponse(jwt));
-        resp.setSuccess(true);
-        return resp;
-    }
+	@Autowired
+	UserService userService;
 
-    @PostMapping("/signup")
-    public SingleResponse<String> registerUser(@Valid @RequestBody SignUpRequest signUpRequest) {
-    	SingleResponse<String> resp = new SingleResponse<>();
-        if(userRepository.existsByUsername(signUpRequest.getUsername())) {
-             resp.setData("Username is already taken!");
-             resp.setStatusCode(HttpStatus.BAD_REQUEST.toString());
-             resp.setSuccess(true);
-			return	resp;
-        }
+	@Autowired
+	MyEmailService mailService;
 
-        if(userRepository.existsByEmail(signUpRequest.getEmail())) {
-            resp.setData("Email Address already in use!");
-            resp.setStatusCode(HttpStatus.BAD_REQUEST.toString());
-            resp.setSuccess(true);
-			return	resp;
-        }
+	@PostMapping("/signin")
+	public SingleResponse<JwtAuthenticationResponse> authenticateUser(@Valid @RequestBody LoginRequest loginRequest) {
+		SingleResponse<JwtAuthenticationResponse> resp = new SingleResponse<>();
+		Authentication authentication = authenticationManager.authenticate(
+				new UsernamePasswordAuthenticationToken(loginRequest.getUsernameOrEmail(), loginRequest.getPassword()));
 
-        // Creating user's account
-        User user = new User(signUpRequest);
+		SecurityContextHolder.getContext().setAuthentication(authentication);
 
-        user.setPassword(passwordEncoder.encode(user.getPassword()));
+		User user = userRepository
+				.findByUsernameOrEmail(loginRequest.getUsernameOrEmail(), loginRequest.getUsernameOrEmail()).get();
 
-        Role userRole = roleRepository.findByName(RoleName.ROLE_USER)
-                .orElseThrow(() -> new AppException("User Role not set."));
+		String jwt = tokenProvider.generateToken(authentication);
+		JwtAuthenticationResponse j = new JwtAuthenticationResponse(jwt);
+		j.setUser(user);
+		resp.setData(j);
+		resp.setSuccess(true);
+		return resp;
+	}
 
-        user.setRoles(Collections.singleton(userRole));
+	@PostMapping("/signup")
+	public SingleResponse<String> registerUser(@Valid @RequestBody SignUpRequest signUpRequest) {
+		SingleResponse<String> resp = new SingleResponse<>();
+		if (userRepository.existsByUsername(signUpRequest.getUsername())) {
+			resp.setData("Username is already taken!");
+			resp.setStatusCode(HttpStatus.BAD_REQUEST.toString());
+			return resp;
+		}
 
-        User result = userRepository.save(user);
+		if (userRepository.existsByEmail(signUpRequest.getEmail())) {
+			resp.setData("Email Address already in use!");
+			resp.setStatusCode(HttpStatus.BAD_REQUEST.toString());
+			return resp;
+		}
 
-        URI location = ServletUriComponentsBuilder
-                .fromCurrentContextPath().path("/users/{username}")
-                .buildAndExpand(result.getUsername()).toUri();
+		// Creating user's account
+		User user = new User(signUpRequest);
 
-        resp.setData("User registered successfully");
-        resp.setStatusCode("200");
-        resp.setSuccess(true);
-        return resp;
-    }
+		user.setPassword(passwordEncoder.encode(user.getPassword()));
+
+		Role userRole = roleRepository.findByName(RoleName.ROLE_USER)
+				.orElseThrow(() -> new AppException("User Role not set."));
+
+		user.setRoles(Collections.singleton(userRole));
+
+		User result = userRepository.save(user);
+
+		URI location = ServletUriComponentsBuilder.fromCurrentContextPath().path("/users/{username}")
+				.buildAndExpand(result.getUsername()).toUri();
+
+		resp.setData("User registered successfully");
+		resp.setStatusCode("200");
+		return resp;
+	}
+
+	@GetMapping(value = "/logout")
+	public SingleResponse<String> logout(HttpServletRequest request, HttpServletResponse response) {
+		SingleResponse<String> result = new SingleResponse<String>();
+		Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+		if (auth != null) {
+			String username = auth.getName();
+			new SecurityContextLogoutHandler().logout(request, response, auth);
+		}
+		result.setSuccess(true);
+		result.setStatusCode("200");
+		result.setData("You are successfully logged out");
+		return result;
+	}
+
+	@PostMapping(value = "/resetPassword")
+	public SingleResponse<String> handlePasswordReset(@RequestBody PasswordResetDto passwordResetDTO) {
+
+		SingleResponse<String> result = new SingleResponse<String>();
+		PasswordResetToken token = tokenRepository.findByToken(passwordResetDTO.getToken());
+		if (token != null) {
+
+			User user = token.getUser();
+			String updatedPassword = "";
+			try {
+				updatedPassword = Base64.getEncoder().encodeToString(passwordResetDTO.getPassword().getBytes("utf-8"));
+			} catch (UnsupportedEncodingException e) {
+				e.printStackTrace();
+			}
+			userService.updatePassword(updatedPassword, user.getId());
+			tokenRepository.delete(token);
+		}
+		result.setData("Password reset successfully");
+		result.setStatusCode("200");
+		result.setSuccess(true);
+		return result;
+	}
+
+	@GetMapping(value = "/resetPassword/{email}")
+	public SingleResponse<String> sendResetPasswordMail(HttpServletRequest request,@PathVariable("email") String email) {
+
+		SingleResponse<String> result = new SingleResponse<>();
+
+		User user = userRepository.findUserByEmail(email);
+		if (user == null) {
+			result.setSuccess(false);
+			result.setStatusCode("412");
+			result.setData("Email ID does not exist in out database, please enter correct email id.");
+			return result;
+		} else {
+			PasswordResetToken token = new PasswordResetToken();
+			token.setToken(UUID.randomUUID().toString());
+			token.setUser(user);
+			token.setExpiryDate(72);
+			tokenRepository.save(token);
+
+			Mail mail = new Mail();
+			mail.setFrom("raj.singh.dit8@gmail.com");
+			mail.setTo(user.getEmail());
+			mail.setSubject("Password reset request");
+
+			String url = request.getScheme() + "://" + request.getServerName() + ":" + request.getServerPort()
+					+ "/SecuredWeb/service/reset-password?token=" + token.getToken();
+			System.err.println(url);
+			mail.setBody(url);
+
+			mailService.sendEmail(mail);
+
+			result.setData(
+					"If you are registered, then an email with password reset link would have been sent to your email id.");
+			result.setStatusCode("200");
+			result.setSuccess(true);
+			return result;
+		}
+	}
 }
