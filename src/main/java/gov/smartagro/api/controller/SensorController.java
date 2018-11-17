@@ -9,7 +9,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import gov.smartagro.api.model.Sensordata;
 import gov.smartagro.api.response.SingleResponse;
-import gov.smartagro.api.service.CropService;
 import gov.smartagro.api.service.SensorService;
 
 @RestController

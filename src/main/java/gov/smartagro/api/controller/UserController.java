@@ -1,7 +1,5 @@
 package gov.smartagro.api.controller;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -18,7 +16,6 @@ import gov.smartagro.api.payload.UserSummary;
 import gov.smartagro.api.repository.UserRepository;
 import gov.smartagro.api.security.CurrentUser;
 import gov.smartagro.api.security.UserPrincipal;
-import gov.smartagro.api.service.PollService;
 
 @RestController
 @RequestMapping("/api")
@@ -27,10 +24,7 @@ public class UserController {
     @Autowired
     private UserRepository userRepository;
 
-    @Autowired
-    private PollService pollService;
 
-    private static final Logger logger = LoggerFactory.getLogger(UserController.class);
 
     @GetMapping("/user/me")
     @PreAuthorize("hasRole('USER')")
