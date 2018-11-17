@@ -7,7 +7,6 @@ import javax.validation.Valid;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -23,12 +22,12 @@ import gov.smartagro.api.exception.AppException;
 import gov.smartagro.api.model.Role;
 import gov.smartagro.api.model.RoleName;
 import gov.smartagro.api.model.User;
-import gov.smartagro.api.payload.ApiResponse;
 import gov.smartagro.api.payload.JwtAuthenticationResponse;
 import gov.smartagro.api.payload.LoginRequest;
 import gov.smartagro.api.payload.SignUpRequest;
 import gov.smartagro.api.repository.RoleRepository;
 import gov.smartagro.api.repository.UserRepository;
+import gov.smartagro.api.response.SingleResponse;
 import gov.smartagro.api.security.JwtTokenProvider;
 
 @RestController
@@ -51,8 +50,8 @@ public class AuthController {
     JwtTokenProvider tokenProvider;
 
     @PostMapping("/signin")
-    public ResponseEntity<?> authenticateUser(@Valid @RequestBody LoginRequest loginRequest) {
-
+    public SingleResponse<JwtAuthenticationResponse> authenticateUser(@Valid @RequestBody LoginRequest loginRequest) {
+    	SingleResponse<JwtAuthenticationResponse> resp = new SingleResponse<>();
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
                         loginRequest.getUsernameOrEmail(),
@@ -63,24 +62,27 @@ public class AuthController {
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
         String jwt = tokenProvider.generateToken(authentication);
-        return ResponseEntity.ok(new JwtAuthenticationResponse(jwt));
+        resp.setData(new JwtAuthenticationResponse(jwt));
+        return resp;
     }
 
     @PostMapping("/signup")
-    public ResponseEntity<?> registerUser(@Valid @RequestBody SignUpRequest signUpRequest) {
+    public SingleResponse<String> registerUser(@Valid @RequestBody SignUpRequest signUpRequest) {
+    	SingleResponse<String> resp = new SingleResponse<>();
         if(userRepository.existsByUsername(signUpRequest.getUsername())) {
-            return new ResponseEntity<ApiResponse>(new ApiResponse(false, "Username is already taken!"),
-                    HttpStatus.BAD_REQUEST);
+             resp.setData("Username is already taken!");
+             resp.setStatusCode(HttpStatus.BAD_REQUEST.toString());
+			return	resp;
         }
 
         if(userRepository.existsByEmail(signUpRequest.getEmail())) {
-            return new ResponseEntity<ApiResponse>(new ApiResponse(false, "Email Address already in use!"),
-                    HttpStatus.BAD_REQUEST);
+            resp.setData("Email Address already in use!");
+            resp.setStatusCode(HttpStatus.BAD_REQUEST.toString());
+			return	resp;
         }
 
         // Creating user's account
-        User user = new User(signUpRequest.getName(), signUpRequest.getUsername(),
-                signUpRequest.getEmail(), signUpRequest.getPassword());
+        User user = new User(signUpRequest);
 
         user.setPassword(passwordEncoder.encode(user.getPassword()));
 
@@ -95,6 +97,8 @@ public class AuthController {
                 .fromCurrentContextPath().path("/users/{username}")
                 .buildAndExpand(result.getUsername()).toUri();
 
-        return ResponseEntity.created(location).body(new ApiResponse(true, "User registered successfully"));
+        resp.setData("User registered successfully");
+        resp.setStatusCode("200");
+        return resp;
     }
 }

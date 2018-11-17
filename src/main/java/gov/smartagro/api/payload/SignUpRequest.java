@@ -26,4 +26,14 @@ public class SignUpRequest {
     @NotBlank
     @Size(min = 6, max = 20)
     private String password;
+    
+    @Size(max = 100)
+    private String mobileNumber;
+    
+    @Size(max = 100)
+    private String soilHealthCardId;
+    
+    @Size(max = 100)
+    @NotBlank
+    private String adharCardNo;
 }

@@ -20,6 +20,7 @@ import javax.validation.constraints.Size;
 import org.hibernate.annotations.NaturalId;
 
 import gov.smartagro.api.model.audit.DateAudit;
+import gov.smartagro.api.payload.SignUpRequest;
 import lombok.Data;
 
 @Data
@@ -62,6 +63,7 @@ public class User extends DateAudit {
     private String soilHealthCardId;
     
     @Size(max = 100)
+    @NotBlank
     private String adharCardNo;
     
     @ManyToMany(fetch = FetchType.LAZY)
@@ -74,11 +76,14 @@ public class User extends DateAudit {
 
     }
 
-    public User(String name, String username, String email, String password) {
-        this.name = name;
-        this.username = username;
-        this.email = email;
-        this.password = password;
+    public User(SignUpRequest signUpRequest) {
+        this.name = signUpRequest.getName();
+        this.username = signUpRequest.getUsername();
+        this.email = signUpRequest.getEmail();
+        this.password = signUpRequest.getPassword();
+        this.mobileNumber=signUpRequest.getMobileNumber();
+        this.adharCardNo=signUpRequest.getAdharCardNo();
+        this.soilHealthCardId=signUpRequest.getSoilHealthCardId();
     }
 
 }
