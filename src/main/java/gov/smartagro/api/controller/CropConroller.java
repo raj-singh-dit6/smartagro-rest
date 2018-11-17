@@ -6,11 +6,13 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import gov.smartagro.api.model.Crop;
-import gov.smartagro.api.model.UserCrop;
 import gov.smartagro.api.model.UserCropDto;
+import gov.smartagro.api.model.UserCropRequestObject;
 import gov.smartagro.api.response.Response;
 import gov.smartagro.api.response.SingleResponse;
 import gov.smartagro.api.service.CropService;
@@ -43,6 +45,23 @@ public class CropConroller {
 		UserCropDto result = null;
 		try {
 			result = cropService.getUserCrops(1L);
+
+		} catch (Exception e) {
+			resp.setSuccess(true);
+			return resp;
+		}
+		resp.setData(result);
+		resp.setSuccess(true);
+		return resp;
+	}
+
+	@PostMapping("/usercrop")
+	public SingleResponse<UserCropDto> saveUserCrop(@RequestBody UserCropRequestObject data) {
+		SingleResponse<UserCropDto> resp = new SingleResponse<>();
+		UserCropDto result = null;
+		try {
+
+			cropService.saveUserCrop(data);
 
 		} catch (Exception e) {
 			resp.setSuccess(true);

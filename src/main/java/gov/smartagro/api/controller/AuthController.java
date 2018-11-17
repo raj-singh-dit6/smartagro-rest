@@ -63,6 +63,7 @@ public class AuthController {
 
         String jwt = tokenProvider.generateToken(authentication);
         resp.setData(new JwtAuthenticationResponse(jwt));
+        resp.setSuccess(true);
         return resp;
     }
 
@@ -72,12 +73,14 @@ public class AuthController {
         if(userRepository.existsByUsername(signUpRequest.getUsername())) {
              resp.setData("Username is already taken!");
              resp.setStatusCode(HttpStatus.BAD_REQUEST.toString());
+             resp.setSuccess(true);
 			return	resp;
         }
 
         if(userRepository.existsByEmail(signUpRequest.getEmail())) {
             resp.setData("Email Address already in use!");
             resp.setStatusCode(HttpStatus.BAD_REQUEST.toString());
+            resp.setSuccess(true);
 			return	resp;
         }
 
@@ -99,6 +102,7 @@ public class AuthController {
 
         resp.setData("User registered successfully");
         resp.setStatusCode("200");
+        resp.setSuccess(true);
         return resp;
     }
 }
