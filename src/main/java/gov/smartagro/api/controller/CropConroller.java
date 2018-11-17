@@ -44,7 +44,7 @@ public class CropConroller {
 		SingleResponse<UserCropDto> resp = new SingleResponse<>();
 		UserCropDto result = null;
 		try {
-			result = cropService.getUserCrops(1L);
+			result = cropService.getUserCrops(userId);
 
 		} catch (Exception e) {
 			resp.setSuccess(true);

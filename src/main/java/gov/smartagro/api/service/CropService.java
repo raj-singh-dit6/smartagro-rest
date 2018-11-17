@@ -38,19 +38,25 @@ public class CropService {
 
 		UserCropDto s = new UserCropDto();
 
-		UserCrop u = usercropRepository.findById(id).get();
+		List<UserCrop> list= usercropRepository.findByUseridOrderByUsercropidDesc(id);
 
-		Long seedId = u.getSeedid();
+	
+		if(!list.isEmpty()){
+			UserCrop u=list.get(0);
+			Long seedId = u.getSeedid();
 
-		Long cropId = u.getCropid();
+			Long cropId = u.getCropid();
 
-		Crop crop = cropRepository.findById(cropId).get();
+			Crop crop = cropRepository.findById(cropId).get();
 
-		Seed seed = seedRepository.findById(seedId).get();
+			Seed seed = seedRepository.findById(seedId).get();
 
-		s.setCrop(crop);
+			s.setCrop(crop);
 
-		s.setSeed(seed);
+			s.setSeed(seed);
+		}
+				
+
 		return s;
 
 	}
