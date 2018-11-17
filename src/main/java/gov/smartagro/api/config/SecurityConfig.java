@@ -21,10 +21,6 @@ import gov.smartagro.api.security.JwtAuthenticationEntryPoint;
 import gov.smartagro.api.security.JwtAuthenticationFilter;
 
 
-/**
- * Created by rajeevkumarsingh on 01/08/17.
- */
-
 @Configuration
 @EnableWebSecurity
 @EnableGlobalMethodSecurity(
