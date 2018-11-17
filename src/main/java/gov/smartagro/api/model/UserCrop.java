@@ -1,60 +1,27 @@
 package gov.smartagro.api.model;
 
-public class UserCrop {
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.Table;
 
-	private Long userCropId; 
-	private Long cropId;
-	private Long userId;
+import lombok.Data;
+
+@Entity
+@Data
+@Table(name = "usercrop")
+public class UserCrop extends BaseDomain {
+	@Id
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	private Long usercropid;
+
+	private Long cropid;
+
+	private Long seedid;
+
+	private Long userid;
 	
 	
-	public UserCrop() {
-		// TODO Auto-generated constructor stub
-	}
-	
-	public UserCrop(Long userCropId, Long cropId, Long userId) {
-		super();
-		this.userCropId = userCropId;
-		this.cropId = cropId;
-		this.userId = userId;
-	}
-	/**
-	 * @return the userCropId
-	 */
-	public Long getUserCropId() {
-		return userCropId;
-	}
-	/**
-	 * @param userCropId the userCropId to set
-	 */
-	public void setUserCropId(Long userCropId) {
-		this.userCropId = userCropId;
-	}
-	/**
-	 * @return the cropId
-	 */
-	public Long getCropId() {
-		return cropId;
-	}
-	/**
-	 * @param cropId the cropId to set
-	 */
-	public void setCropId(Long cropId) {
-		this.cropId = cropId;
-	}
-	/**
-	 * @return the userId
-	 */
-	public Long getUserId() {
-		return userId;
-	}
-	/**
-	 * @param userId the userId to set
-	 */
-	public void setUserId(Long userId) {
-		this.userId = userId;
-	}
-	
-	
-	
-	
+
 }
