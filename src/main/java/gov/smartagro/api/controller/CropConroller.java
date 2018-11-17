@@ -37,7 +37,7 @@ public class CropConroller {
 		return resp;
 	}
 
-	@GetMapping("/crop/{userId}")
+	@GetMapping("/crops/{userId}")
 	public SingleResponse<UserCropDto> getUserCrop(@PathVariable("userId") Long userId) {
 		SingleResponse<UserCropDto> resp = new SingleResponse<>();
 		UserCropDto result = null;
