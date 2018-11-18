@@ -85,10 +85,13 @@ public class CropConroller {
 	}
 	
 	@GetMapping("/prediction/{id}")
-	public SingleResponse<Integer> getSoilInfo(@PathVariable("id") Long id) {
-		SingleResponse<Integer> resp = new SingleResponse<>();
+	public SingleResponse<String> getSoilInfo(@PathVariable("id") Long id) {
+		SingleResponse<String> resp = new SingleResponse<>();
 		List<Crop> result = null;
 		Integer match = 0;
+		
+		String ids="";
+		
 		try {
 			
 			Soilhealthcard soil= soilHealthRepository.findByCardnumber(id).get();
@@ -125,17 +128,18 @@ public class CropConroller {
 				if(res<diff){
 					match=s1.getSoiltocropid();
 					diff=res;
+					ids=s1.getBc();
 				}
 				
 			}
 			
 			
-
+			
 		} catch (Exception e) {
 			resp.setSuccess(false);
 			return resp;
 		}
-		resp.setData(match);
+		resp.setData(ids);
 		resp.setSuccess(true);
 		return resp;
 	}

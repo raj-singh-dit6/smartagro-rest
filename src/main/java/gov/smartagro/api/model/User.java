@@ -72,12 +72,7 @@ public class User extends DateAudit {
             inverseJoinColumns = @JoinColumn(name = "role_id"))
     private Set<Role> roles = new HashSet<>();
     
-    @ManyToMany(fetch = FetchType.LAZY)
-    @JoinTable(name = "user_crops",
-            joinColumns = @JoinColumn(name = "user_id"),
-            inverseJoinColumns = @JoinColumn(name = "crop_id"))
-    private Set<Crop> crops = new HashSet<>();
-
+    
     public User() {
 
     }
