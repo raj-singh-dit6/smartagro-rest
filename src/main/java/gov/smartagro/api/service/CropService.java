@@ -78,4 +78,8 @@ public class CropService {
 
 	}
 
+	public List<Crop> getSoilInfo() {
+		return null;
+	}
+
 }
