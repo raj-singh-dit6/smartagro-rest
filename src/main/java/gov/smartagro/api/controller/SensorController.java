@@ -49,6 +49,9 @@ public class SensorController {
 		try {
 
 			result = sensorService.getSensorData(userId);
+			if(result!=null && !result.isEmpty()){
+				result.subList(10, result.size()).clear();
+			}
 
 		} catch (Exception e) {
 			logger.error(e.getMessage());
